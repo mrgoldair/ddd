@@ -1,6 +1,7 @@
 /**
  * Tatooine
  */
+import './matrix.js';
 
 const vsSource = `
   attribute vec4 aVertexPosition;
@@ -21,6 +22,10 @@ const fsSource = `
 
 let modelViewMatrix = glMatrix.mat4.create();
 
+/**
+ * 
+ * @returns Entry point / composition root
+ */
 function main() {
 
   let canvas = document.querySelector("#glCanvas");
@@ -28,7 +33,7 @@ function main() {
   let gl = canvas.getContext("webgl");
 
   // Only continue if we can get a WebGL2 context
-  if (gl === null){
+  if (gl === null) {
     alert("Unable to initialize WebGL. Your browser may not support it.");
     return;
   }
@@ -54,6 +59,7 @@ function main() {
 
   // Setup matrices and draw the scene
   setup(gl, programInfo, buffers);
+
 
   window.onkeyup = draw(gl, programInfo);
 }
@@ -92,7 +98,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
  * @param {*} source - Textual source of shader
  * @returns - Compiled WebGL shader
  */
-function loadShader(gl, type, source){
+function loadShader(gl, type, source) {
   const shader = gl.createShader(type);
 
   gl.shaderSource(shader, source);
@@ -108,15 +114,40 @@ function loadShader(gl, type, source){
 }
 
 /**
- * 
+ * Hard-coded plane.
+ * Loading mesh data should take an array of numbers
+ * representing our vertices (x,y,z) and load them
+ * into buffers dynamically
  * @param {*} gl - WebGL Context
  * @returns - Object containing buffer objects
  */
-function initBuffers(gl){
+function initBuffers(gl, vertices = null) {
+
+  /*
+  *  bufferData(a,d)    bindBuffer(a,b)
+  *      \|/                 \|/
+  *       |                   |
+  *     --|-------------------|--
+  *    |  -›  ARRAY_BUFFER   ›-  |
+  *    |           |             |
+  *    |          /|\            |
+  *    | (bindBuffer,bufferData) |
+  *     -------------------------
+  */
+
+  // Create our gl buffer to fill with model vertices
   const positionBuffer = gl.createBuffer();
 
+  /* WebGL lets us manipulate many WebGL resources on global bind points - here gl.ARRAY_BUFFER.
+     You can think of bind points as internal global variables inside WebGL.
+     First you bind a resource to a bind point. Then, subsequent functions
+     refer to the resource through the bind point.
+
+     Here we bind the `positionBuffer` to ARRAY_BUFFER bind point
+  */
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
+  // Values we'll use as our attribute values
   const positions = [
     -10.0,  10.0,
      10.0,  10.0,
@@ -124,9 +155,8 @@ function initBuffers(gl){
      10.0, -10.0
   ];
 
-  gl.bufferData(gl.ARRAY_BUFFER,
-                new Float32Array(positions),
-                gl.STATIC_DRAW);
+  // Notice we buffer data via our bind point (ARRAY_BUFFER) not the `positionBuffer` directly
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
   return {
     position: positionBuffer
@@ -134,13 +164,13 @@ function initBuffers(gl){
 }
 
 /**
- * Static setup - details that don't change after creation
+ * Static setup and initial draw - details that don't change after creation
  * or at the arrival of events
  * @param {*} gl 
  * @param {*} programInfo 
  * @param {*} buffers 
  */
-function setup(gl, programInfo, buffers){
+function setup(gl, programInfo, buffers) {
 
   // Set the clear color to black, fully opaque
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -153,51 +183,63 @@ function setup(gl, programInfo, buffers){
   // Clear the buffer with the specified colour;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  const zNear = 0.1;
-  const zFar = 100.0;
-  const left = -50;
-  const right = 50;
-  const top = 50;
+  const zNear  =   0.1;
+  const zFar   = 100.0;
+  const left   = -50;
+  const right  =  50;
+  const top    =  50;
   const bottom = -50;
 
-  let perspective = (l,r,t,b,n,f) => {
+  /**
+   * Create a perspective frustum from a description of edges
+   * - The resulting matrix is in row-order
+   * - Maybe in a `Matrix` module
+   * @param {*} l - left
+   * @param {*} r - right
+   * @param {*} t - top
+   * @param {*} b - bottom
+   * @param {*} n - near
+   * @param {*} f - far
+   * @returns 
+   */
+  let perspective = (l, r, t, b, n, f) => {
     return new Float32Array([
-      (2*n)/(r-l),         0.0,            0.0,  0.0,
-              0.0, (2*n)/(t-b),            0.0,  0.0,
-      (r+l)/(r-l), (t+b)/(t-b),   -(f+n)/(f-n), -1.0,
-              0.0,         0.0, -(2*f*n)/(f-n),  0.0
+      (2 * n) / (r - l), 0.0, 0.0, 0.0,
+      0.0, (2 * n) / (t - b), 0.0, 0.0,
+      (r + l) / (r - l), (t + b) / (t - b), -(f + n) / (f - n), -1.0,
+      0.0, 0.0, -(2 * f * n) / (f - n), 0.0
     ]);
   }
 
   let pMatrix = perspective(left, right, top, bottom, zNear, zFar);
 
-  glMatrix.mat4.translate(modelViewMatrix,    // destination matrix
-                          modelViewMatrix,    // matrix to translate
-                          [ 0.0, 0.0, -0.2 ]) // amount to translate
+  glMatrix.mat4.translate(modelViewMatrix,  // destination matrix
+                          modelViewMatrix,  // matrix to translate
+                          [0.0, 0.0, -0.2]) // amount to translate
 
   // How we setup our attributes and uniforms
   // Tell WebGL how to pull the data from our buffer
   {
-    // Constitutes one iteration of the vertex shader.
-    // Two components; one for each of 'x' and 'y'. The
-    // remainder of the vec4 are automatically filled with 0s
-    const numComponents = 2;
-    // Help to specify how many bits to take; the boundary of our floats
-    const type = gl.FLOAT;
-    // Don't convert to the range 0 -> 1
-    const normalize = false;
-    const stride = 0;
-    const offset = 0;
 
+    // Like `initBuffer` we're wanting to affect our position buffer so we bind to gl.ARRAY_BUFFER
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+
+    /**
+     * `vertexAttribPointer` implicitly binds to ARRAY_BUFFER
+     * 
+     * "A hidden part of gl.vertexAttribPointer is that it binds the current ARRAY_BUFFER to the attribute.
+     * In other words now this attribute is bound to positionBuffer. That means we're free to bind something
+     *  else to the ARRAY_BUFFER bind point. The attribute will continue to use positionBuffer."
+     */
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexPosition,
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset
+      2,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
+      gl.FLOAT,   // Type – The type of values we're expecting - we converted our position values to Float32
+      false,      // Normalize :: Boolean - Don't convert to the range 0 -> 1
+      0,          // Stride :: Number – 0 = move forward component-per-vert * sizeof(type)
+      0           // Offset :: Number – Where to start taking values in the buffer - 0 is the start, no offset
     );
+
     gl.enableVertexAttribArray(
       programInfo.attribLocations.vertexPosition
     );
@@ -205,11 +247,14 @@ function setup(gl, programInfo, buffers){
 
   gl.useProgram(programInfo.program);
 
+  // Using uniform locations from the compiled program, set our matrices
+  // These will be combined within the vertex shader
   gl.uniformMatrix4fv(
     programInfo.uniformLocations.projectionMatrix,
     false,
     pMatrix
   );
+
   gl.uniformMatrix4fv(
     programInfo.uniformLocations.modelViewMatrix,
     false,
@@ -231,30 +276,30 @@ function setup(gl, programInfo, buffers){
  */
 const draw = (gl, programInfo) => e => {
 
-  switch (e.keyCode){
+  switch (e.keyCode) {
     case 37:
       console.log("left");
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -1.0, 0.0, 0.0 ])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [-1.0, 0.0, 0.0])
       break;
     case 38:
       console.log("up")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0.0, 0.0, -0.05 ])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -0.05])
       break;
     case 39:
       console.log("right")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 1.0, 0.0, 0.0 ])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [1.0, 0.0, 0.0])
       break;
     case 40:
       console.log("down")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0.0, 0.0, 0.05 ])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 0.05])
       break;
     default:
       console.log("other");
   }
-  
+
   // Set our updated matrix
-  gl.uniformMatrix4fv( programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-  
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+
   // Clear the buffer with the specified colour;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 

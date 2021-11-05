@@ -2,6 +2,18 @@
 
 ## An experiment in WebGL
 
+##### Model Space
+
+The coordinate space in which the centre of the model is always at the origin.
+
+
+
+##### World Space
+
+The coordinate space which all other models are placed within and moved relative to one another.
+
+
+
 ##### Screen Space
 
 > ...perform a perspective divide on the points in camera space to compute their coordinates in screen space
@@ -10,11 +22,11 @@
 
 
 
-##### World Space
-
 ##### Camera Space
 
 ##### NDC Space
+
+
 
 ##### Homogenous Coordinates
 
@@ -117,3 +129,14 @@ let programInfo = {
 
 
 To get data into <u>inputs</u> we use <u>buffers</u> 
+
+
+
+###### Buffers 'n' Bind Points
+
+A big portion of WebGL is about setting state. In order to do that WebGL offers "bind points" for example `ARRAY_BUFFER`. Implicitly WebGL can only work on one particular bind point at a time – though there are multiple bind points. In the case of `ARRAY_BUFFER` we set that to some particular buffer (that we've created through `createBuffer()`) and subsequent buffer operations affect whatever buffer is bound to `ARRAY_BUFFER`. 
+
+> Nearly all of the entire WebGL API is about [setting up state](https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html) for these pairs of functions to run
+>
+> [webgl2fundamentals.org](https://webgl2fundamentals.org/webgl/lessons/webgl-fundamentals.html)
+
