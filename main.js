@@ -1,7 +1,7 @@
 /**
  * Tatooine
  */
-import './matrix.js';
+import * as m from './matrix.js';
 
 const vsSource = `
   attribute vec4 aVertexPosition;
@@ -20,7 +20,7 @@ const fsSource = `
   }
 `;
 
-let modelViewMatrix = glMatrix.mat4.create();
+let modelViewMatrix = m.identity(); //glMatrix.mat4.create();
 
 /**
  * 
@@ -51,17 +51,21 @@ function main() {
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
+    },
+    matrices: {
+      view: null
     }
   }
 
   // Create and add vertex data buffer
   let buffers = initBuffers(gl);
 
-  // Setup matrices and draw the scene
+  // Setup matrices
+  // Initial draw
   setup(gl, programInfo, buffers);
 
-
-  window.onkeyup = draw(gl, programInfo);
+  // Start app loop
+  start(gl, programInfo);
 }
 
 /**
@@ -269,46 +273,70 @@ function setup(gl, programInfo, buffers) {
 }
 
 /**
- * draw :: (GL, ProgramInfo) => Event => Void
- * Dynamic draw - handle events that recompute WebGL state
+ * Effecting program through key events
  * @param {*} gl - WebGL context
  * @param {*} programInfo - Compiled shader details
  */
-const draw = (gl, programInfo) => e => {
+const updateModelViewMatrix = (gl, programInfo) => e => {
 
+  // Calculate a new matrix
   switch (e.keyCode) {
     case 37:
-      console.log("left");
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [-1.0, 0.0, 0.0])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -1, 0, 0 ])
+      console.log(modelViewMatrix);
       break;
     case 38:
-      console.log("up")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -0.05])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0, 0.5, 0 ])
+      console.log(modelViewMatrix);
       break;
     case 39:
-      console.log("right")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [1.0, 0.0, 0.0])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 1, 0, 0 ])
+      console.log(modelViewMatrix);
       break;
     case 40:
-      console.log("down")
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, 0.05])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0, -0.5, 0 ])
+      console.log(modelViewMatrix);
       break;
     default:
       console.log("other");
   }
 
-  // Set our updated matrix
+  // Set our newly calculated matrix
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+}
 
-  // Clear the buffer with the specified colour;
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function start(gl, program) {
 
-  {
-    const offset = 0;
-    const vertexCount = 4; // 8 pieces of data in our buffer; 2 per vertex, hence 4
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+  // key->vector . (mult m) v . set(program, ["matrices", "viewModel"])
+  // compose( key)
+  // Calculate matrix when a direction key is pressed
+  window.onkeyup = updateModelViewMatrix(gl, program);
+
+  function loop(){
+    let frameId = requestAnimationFrame(loop);
+
+    {
+      // Clear the buffer with the specified colour;
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const offset = 0;
+      const vertexCount = 4; // 8 pieces of data in our buffer; 2 per vertex, hence 4
+      gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+    }
   }
+
+  // Begin the loop
+  loop();
 }
 
 // Run main on the 'load' event
 window.onload = main;
+
+/* 
+  keys({
+    up:(m) => m
+    down:(m) => m
+  })
+*/
+// (ku,m) => m . m => ()
+// (kd,m) => m
