@@ -2,21 +2,19 @@
 /**
  * basis vectors in row-major order
  */
-const identity = () => {
-  return [
+const identity = [
     1, 0 ,0 ,0, // x
     0, 1 ,0 ,0, // y
     0, 0 ,1 ,0, // z
     0, 0 ,0 ,1  // w
-  ]
-};
+  ];
 
 /**
  * Multiply two 4x4 matrices
  * @param {*} m 
  * @param {*} n 
  */
-const mul4 = (m,n) => {
+const mult4 = (m,n) => {
   // Row-major matrices
   let x = [
     (m[0] * n[0] + m[1] * n[4] + m[2] *  n[8] + m[3] * n[12]),
@@ -95,4 +93,4 @@ const rotateY = (matrix, theta) => {
   ];
 }
 
-export { identity, translate, mul4 };
+export { identity, translate, mult4 };
