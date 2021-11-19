@@ -7,6 +7,10 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
+  "jest": {
+    "moduleFileExtensions": [ "js", "mjs" ],
+    "testMatch": [ "**/?(*.)+(spec|test).mjs?(x)" ]
+  },
   "author": "Me",
   "license": "ISC",
   "devDependencies": {

@@ -20,7 +20,7 @@ const fsSource = `
   }
 `;
 
-let modelViewMatrix = m.identity(); //glMatrix.mat4.create();
+let modelViewMatrix = m.identity;
 
 /**
  * 
@@ -153,10 +153,42 @@ function initBuffers(gl, vertices = null) {
 
   // Values we'll use as our attribute values
   const positions = [
-    -10.0,  10.0,
-     10.0,  10.0,
-    -10.0, -10.0,
-     10.0, -10.0
+    //front
+    -50,  50, -50,
+     50,  50, -50,
+    -50, -50, -50,
+    -50, -50, -50,
+     50,  50, -50,
+     50, -50, -50,
+    // left
+    -50, -50, -50,
+    -50,  50, -50,
+    -50,  50,  50,
+    -50,  50,  50,
+    -50, -50,  50,
+    -50, -50, -50,
+    // right
+     50, -50, -50,
+     50,  50, -50,
+     50,  50,  50,
+     50,  50,  50,
+     50, -50,  50,
+     50, -50, -50,
+    // // right
+    //  10.0, -10.0, -10.0,
+    //  10.0,  10.0, -10.0,
+    //  10.0,  10.0,  10.0,
+    //  10.0, -10.0,  10.0,
+    // // top
+    // -10.0,  10.0,  10.0,
+    // -10.0,  10.0, -10.0,
+    //  10.0,  10.0, -10.0,
+    //  10.0,  10.0,  10.0,
+    // // bottom
+    // -10.0, -10.0,  10.0,
+    // -10.0, -10.0, -10.0,
+    //  10.0, -10.0, -10.0,
+    //  10.0, -10.0,  10.0
   ];
 
   // Notice we buffer data via our bind point (ARRAY_BUFFER) not the `positionBuffer` directly
@@ -177,7 +209,7 @@ function initBuffers(gl, vertices = null) {
 function setup(gl, programInfo, buffers) {
 
   // Set the clear color to black, fully opaque
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
   // Clear everything
   gl.clearDepth(1.0);
   // Enable depth testing
@@ -187,12 +219,13 @@ function setup(gl, programInfo, buffers) {
   // Clear the buffer with the specified colour;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  const zNear  =   0.1;
-  const zFar   = 100.0;
-  const left   = -50;
-  const right  =  50;
-  const top    =  50;
-  const bottom = -50;
+  // Because z 
+  const zNear  =   50;
+  const zFar   = 1000;
+  const left   = -100;
+  const right  =  100;
+  const top    =  100;
+  const bottom = -100;
 
   /**
    * Create a perspective frustum from a description of edges
@@ -208,18 +241,16 @@ function setup(gl, programInfo, buffers) {
    */
   let perspective = (l, r, t, b, n, f) => {
     return new Float32Array([
-      (2 * n) / (r - l), 0.0, 0.0, 0.0,
-      0.0, (2 * n) / (t - b), 0.0, 0.0,
-      (r + l) / (r - l), (t + b) / (t - b), -(f + n) / (f - n), -1.0,
-      0.0, 0.0, -(2 * f * n) / (f - n), 0.0
+      (2 * n) / (r - l),               0.0,                    0.0,  0.0,
+                    0.0, (2 * n) / (t - b),                    0.0,  0.0,
+                    0.0,               0.0,     -(f + n) / (f - n), -1.0,
+      (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
     ]);
   }
 
   let pMatrix = perspective(left, right, top, bottom, zNear, zFar);
 
-  glMatrix.mat4.translate(modelViewMatrix,  // destination matrix
-                          modelViewMatrix,  // matrix to translate
-                          [0.0, 0.0, -0.2]) // amount to translate
+  glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [-0, 0, -155.0]);
 
   // How we setup our attributes and uniforms
   // Tell WebGL how to pull the data from our buffer
@@ -237,7 +268,7 @@ function setup(gl, programInfo, buffers) {
      */
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexPosition,
-      2,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
+      3,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
       gl.FLOAT,   // Type – The type of values we're expecting - we converted our position values to Float32
       false,      // Normalize :: Boolean - Don't convert to the range 0 -> 1
       0,          // Stride :: Number – 0 = move forward component-per-vert * sizeof(type)
@@ -267,8 +298,8 @@ function setup(gl, programInfo, buffers) {
 
   {
     const offset = 0;
-    const vertexCount = 4; // 8 pieces of data in our buffer; 2 per vertex, hence 4
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+    const vertexCount = 18; // 8 pieces of data in our buffer; 2 per vertex, hence 4
+    gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
   }
 }
 
@@ -282,7 +313,7 @@ const updateModelViewMatrix = (gl, programInfo) => e => {
   // Calculate a new matrix
   switch (e.keyCode) {
     case 37:
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -1, 0, 0 ])
+      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -10, 0, 0 ])
       console.log(modelViewMatrix);
       break;
     case 38:
@@ -310,7 +341,19 @@ function start(gl, program) {
   // key->vector . (mult m) v . set(program, ["matrices", "viewModel"])
   // compose( key)
   // Calculate matrix when a direction key is pressed
+  // Being an event handler, this is a sink. We stop processing at the end; we 
+  // use the event notification to time side-effects.
   window.onkeyup = updateModelViewMatrix(gl, program);
+
+  let rotate = 0;
+  window.onmousemove = function({ movementX, screenX, screenY }) {
+    //console.log(screenX)
+    rotate = (screenX * ((2 * Math.PI) / 800))
+    let rm = m.rotateX(rotate)
+    let mm = m.mult4(rm, modelViewMatrix);
+
+    gl.uniformMatrix4fv(program.uniformLocations.modelViewMatrix, false, mm);
+  }
 
   function loop(){
     let frameId = requestAnimationFrame(loop);
@@ -320,8 +363,8 @@ function start(gl, program) {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       const offset = 0;
-      const vertexCount = 4; // 8 pieces of data in our buffer; 2 per vertex, hence 4
-      gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+      const vertexCount = 18; // 8 pieces of data in our buffer; 2 per vertex, hence 4
+      gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
     }
   }
 
@@ -331,12 +374,3 @@ function start(gl, program) {
 
 // Run main on the 'load' event
 window.onload = main;
-
-/* 
-  keys({
-    up:(m) => m
-    down:(m) => m
-  })
-*/
-// (ku,m) => m . m => ()
-// (kd,m) => m

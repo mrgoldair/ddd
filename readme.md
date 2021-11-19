@@ -2,6 +2,18 @@
 
 ## An experiment in WebGL
 
+#### Todo
+
+- Create delta from mouse input 
+
+- Decide how to handle state updates (calculating and setting matrix values) from browser callbacks e.g. mouse/keyboard
+
+  
+
+
+
+#### Glossary
+
 ##### Model Space
 
 The coordinate space in which the centre of the model is always at the origin.
@@ -140,3 +152,12 @@ A big portion of WebGL is about setting state. In order to do that WebGL offers 
 >
 > [webgl2fundamentals.org](https://webgl2fundamentals.org/webgl/lessons/webgl-fundamentals.html)
 
+
+
+##### Projection Matrices
+
+Why and how
+
+##### Rotation Matrices
+
+Why and how
