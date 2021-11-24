@@ -1,18 +1,22 @@
-# Tatooine
+<img src="screenshot.png">
 
-## An experiment in WebGL
 
-#### Todo
 
-- Create delta from mouse input 
+### Tatooine
+
+
+
+##### Todo
+
+- Create delta from mouse input
 
 - Decide how to handle state updates (calculating and setting matrix values) from browser callbacks e.g. mouse/keyboard
 
   
 
+### Glossary
 
 
-#### Glossary
 
 ##### Model Space
 
