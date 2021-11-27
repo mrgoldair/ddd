@@ -1,8 +1,10 @@
-<img src="screenshot.png">
-
-
-
 ### Tatooine
+
+A tiny learning project for WebGL
+
+
+
+<img src="screenshot.png">
 
 
 
@@ -14,7 +16,103 @@
 
   
 
-### Glossary
+##### Glossary / Ramblings
+
+
+
+##### Expressing matrices in JS/TS
+
+Is there any point in providing more structure to vectors and matrices given that WebGL only accepts them as an array of floats anyway? 
+
+I was motivated for a better solution due to the cumbersome way in which I was writing tests for matrix functions. For example, in order to test `rotateX` each basis vector of the resulting matrix needs to be inspected for the correct values. Because the format is unchanged from what WebGL requires that means pulling out 4 values (`x, y, z, w`) from a 16 value array (3 basis vectors each of 4 components + `w` vector to support affine transformations). Needless to say this is error prone.
+
+```typescript
+let rotated = rotateX(rads(90));
+
+expect(rotated[0]).toEqual(1);
+expect(rotated[1]).toEqual(0);
+expect(rotated[2]).toEqual(0);
+expect(rotated[3]).toEqual(0);
+// or
+expect([rotated[0], rotated[1], rotate[2], rotated[3]]).toEqual([1,0,0,0]);
+```
+
+Could I define a type such that I don't have to build each vector picking indices? The first attempt was super structured – a matrix was defined in terms of a certain dimension of vector. A matrix defined in terms of `Vec2` would have `x`and `y` vectors each of which had `x` and `y` components. A matrix of `Vec3`would have `x`, `y` and `z` with each vector having three components. A matrix of `Vec4`would have 4 and so on.
+
+```typescript
+type Vec2 =
+{
+  [ B in "x" | "y" ]:number
+}
+
+type Vec3 =
+{
+  [ B in "x" | "y" | "z" ]:number
+}
+
+type Vec4 =
+{
+  [ B in "x" | "y" | "z" | "w" ]:number
+}
+
+type Matrix<T extends Vec2 | Vec3 | Vec4> = { [Prop in keyof T]:T }
+
+let m:Matrix<Vec2> =
+{
+  x: { x:1, y:2 },
+  y: { x:4, y:5 }
+}
+
+let m:Matrix<Vec3> =
+{
+  x: { x:1, y:2, z:3 },
+  y: { x:4, y:5, z:6 },
+  z: { x:7, y:8, z:9 }
+}
+```
+
+As nice and structured as this is, it feels to cumbersome and fiddly when it comes to using them in functions such as `components(m:Matrix<Vec4>)` which returns values of the matrix `m` grouped by component.
+
+```typescript
+function components(a:Matrix<Vec4>) {
+  return {
+    x: [ a.x.x, a.y.x, a.z.x, a.w.x ],
+    y: [ a.x.y, a.y.y, a.z.y, a.w.y ],
+    z: [ a.x.z, a.y.z, a.z.z, a.w.z ],
+    w: [ a.x.w, a.y.w, a.z.w, a.w.w ]
+  }
+}
+```
+
+In cases like this, using objects with a key for each basis vector and component is too clunky. We're almost back where we started getting confused on what values we're pulling from where. The naming of every component and basis' vector can still make things confusing.
+
+The next approach I tried was based on a thought that maybe I didn't need a heavily labelled data structure like a map-of-maps which required me to write/read items via labels, *all* the time. Instead, I needed labels only *some* of the time. Enter vectors and destructuring.
+
+```typescript
+type Vec2 = [ number, number ]
+
+type Vec3 = [ number, number, number ]
+
+type Matrix<V extends Vec2 | Vec3> =
+{
+  [ _ in keyof V ]: V
+}
+
+let m:Matrix<Vec2> =
+[
+  [ 1,2 ],
+  [ 1,2 ]
+]
+
+let n:Matrix<Vec3> =
+[
+  [ 1,0,0 ],
+  [ 0,1,0 ],
+  [ 0,0,1 ]
+]
+```
+
+
 
 
 
