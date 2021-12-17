@@ -2,33 +2,22 @@
  * Matrix functions
  */
 
-let m = {
-  x: [],
-  y: [],
-  z: [],
-  w: []
-}
-
 /**
  * basis vectors in row-major order
  */
-const identity = [
+export const identity = [
   1, 0 ,0 ,0, // x
   0, 1 ,0 ,0, // y
   0, 0 ,1 ,0, // z
   0, 0 ,0 ,1  // w
 ];
 
-const vec = (x,y,z,w) => [ x,y,z,w ];
-
-const mat = (x,y,z,w) => [ x,y,z,w ];
-
 /**
  * Multiply two 4x4 matrices
  * @param {*} m 
  * @param {*} n 
  */
-const mult4 = (m,n) => {
+export const mult4 = (m,n) => {
   // Row-major matrices
   let x = [
     (m[0] * n[0] + m[1] * n[4] + m[2] *  n[8] + m[3] * n[12]),
@@ -69,7 +58,7 @@ const mult4 = (m,n) => {
  * @param {*} v 
  * @returns 
  */
-const translate = (matrix, v) => {
+export const translate = (matrix, v) => {
   // Copy
   let m = Array.of(...matrix);
   // Update
@@ -81,7 +70,7 @@ const translate = (matrix, v) => {
   return m;
 }
 
-const rads = degrees => degrees * (Math.PI / 180)
+export const rads = degrees => degrees * (Math.PI / 180)
 
 /**
  * Rotate matrix `m` about `z` by angle `theta`
@@ -89,7 +78,7 @@ const rads = degrees => degrees * (Math.PI / 180)
  * @param {*} ø - angle in radians
  * @returns 
  */
-const rotateZ = (ø) => {
+export const rotateZ = (ø) => {
   return [
      Math.cos(ø), Math.sin(ø), 0, 0,
     -Math.sin(ø), Math.cos(ø), 0, 0,
@@ -98,7 +87,7 @@ const rotateZ = (ø) => {
   ];
 }
 
-const rotateX = (theta) => {
+export const rotateX = (theta) => {
   return [
     1,                0,               0, 0,
     0,  Math.cos(theta), Math.sin(theta), 0,
@@ -112,13 +101,11 @@ const rotateX = (theta) => {
  * @param {*} theta - the angle (in radians) to rotate by
  * @returns 
  */
-const rotateY = (theta) => {
+export const rotateY = (theta) => {
   return [
      Math.cos(theta), 0, Math.sin(theta), 0,
                    0, 1,               0, 0,
     -Math.sin(theta), 0, Math.cos(theta), 0,
                    0, 0,               0, 1
   ];
-}
-
-export { identity, rads, translate, mult4, rotateX, rotateY, rotateZ };
+};

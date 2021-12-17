@@ -1,99 +1,81 @@
-import { identity, mult4, rads, rotateY, rotateX } from '../matrix.js';
+let { add, scale, mult, traverse } = require('../out/Matrix.js')
 
-describe('multiply', () => {
+describe('Vectors', () => {
+  it('The sum of two vectors should equal the sum of their components', () => {
+    let a = [ 1,0,0 ];
+    let b = [ 0,1,0 ];
 
-  it('a matrix `m` with an identity matrix yields `m`', () => {
-
-    let m = [
-      1,0,0,0,
-      0,2,0,0,
-      0,0,3,0,
-      0,0,0,4
-    ];
-
-    expect(mult4(m,identity)).toEqual(m);
-  });
-
-  it('the sum of component-wise products of each basis in n with each basis in m', () => {
-
-    let m = [
-      1,0,0,0,
-      0,2,0,0,
-      0,0,3,0,
-      0,0,0,4
-    ];
-
-    let n = [
-      4,0,0,0,
-      0,3,0,0,
-      0,0,1,0,
-      0,0,0,1
-    ];
-
-    let mn = [
-      4,0,0,0,
-      0,6,0,0,
-      0,0,3,0,
-      0,0,0,4
-    ];
-
-    expect(mult4(m,n)).toEqual(mn)
-
-  })
-  
-})
-
-describe('rotate around x', () => {
-  it('should leave x unchanged', () => {
-
-    let rotated = rotateX(rads(90));
-
-    expect(rotated[0]).toEqual(1)
-    expect(rotated[1]).toEqual(0)
-    expect(rotated[2]).toEqual(0)
-    expect(rotated[3]).toEqual(0)
+    expect(add(a,b)).toEqual([1,1,0]);
   })
 
-  it('should rotate `y` and `z`', () => {
-
-    let rotated = rotateX(rads(90));
-    // y -> z
-    expect(rotated[4]).toEqual(0)
-    expect(Number(rotated[5].toFixed(1))).toEqual(0)
-    expect(Number(rotated[6].toFixed(1))).toEqual(1)
-    expect(rotated[7]).toEqual(0)
-    // z -> -y
-    expect(rotated[8]).toEqual(0)
-    expect(Number(rotated[9].toFixed(1))).toEqual(-1)
-    expect(Number(rotated[10].toFixed(1))).toEqual(0)
-    expect(rotated[11]).toEqual(0)
+  it('A scaled vector should be equal each component weighted by some constant', () => {
+    expect(scale(2, [ 1,2,3 ])).toEqual([2,4,6])
   })
 })
 
-describe('rotate around y', () => {
-  it('should leave y unchanged', () => {
+describe('Matrix & Vectors', () => {
+  it('A 2-component vector multiplied with a 2x2 matrix yields a vector of length 2', () => {
+    let m = [
+      [ 1,0 ],
+      [ 2,1 ]
+    ];
 
-    let rotated = rotateY(rads(-90));
+    let v = [ 1, 2 ];
 
-    // expect(rotated.y).toEqual([0,1,0,0])
-    expect(rotated[4]).toEqual(0)
-    expect(rotated[5]).toEqual(1)
-    expect(rotated[6]).toEqual(0)
-    expect(rotated[7]).toEqual(0)
+    expect(mult(m,v).length).toEqual(2);
   })
 
-  it('should rotate `x` and `z`', () => {
+  it('A 2-component vector multiplied with a 2x2 matrice yields a 2-component vector', () => {
+    let m = [
+      [ 1, 2 ],
+      [ 3, 4 ]
+    ]
 
-    let rotated = rotateY(rads(-90));
+    let v = [ 1, 2 ];
 
-    expect(Number(rotated[0].toFixed(1))).toEqual(0)
-    expect(rotated[1]).toEqual(0)
-    expect(rotated[2]).toEqual(-1)
-    expect(rotated[3]).toEqual(0)
+    expect(mult(m,v)).toEqual([ 7, 10 ])
+  })
 
-    expect(rotated[8]).toEqual(1)
-    expect(Number(rotated[9].toFixed(1))).toEqual(0)
-    expect(Number(rotated[10].toFixed(1))).toEqual(0)
-    expect(rotated[11]).toEqual(0)
+  it('A 3-component vector multiplied with a 3x3 matrix yields vector of length 3', () => {
+    let m = [
+      [ 1,0,0 ],
+      [ 2,1,0 ],
+      [ 0,1,1 ]
+    ];
+
+    let v = [ 1, 2, 1 ];
+
+    expect(mult(m,v).length).toEqual(3);
+  })
+
+  it('A 3-component vector multiplied with a 3x3 matrice yields a 3-component vector', () => {
+    let m = [
+      [ 1, 2, 2 ],
+      [ 3, 4, 6 ],
+      [ 0, 1, 0 ]
+    ]
+
+    let v = [ 1, 2, 9 ];
+
+    expect(mult(m,v)).toEqual([ 7, 19, 14 ])
+  })
+
+})
+
+describe('Traverse', () => {
+  it('Gathers the nth element of two same-sized arrays into a array of tuples', () => {
+    let m = [
+      [ 1,2,3 ],
+      [ 4,5,6 ],
+      [ 7,8,9 ]
+    ];
+
+    let v = [ 1, 2, 3 ];
+
+    expect(traverse(m,v)).toEqual([
+      [[1,2,3], 1],
+      [[4,5,6], 2],
+      [[7,8,9], 3]
+    ])
   })
 })

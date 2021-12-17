@@ -1,11 +1,10 @@
 {
   "name": "tatooine",
-  "type": "module",
   "version": "1.0.0",
   "description": "A test space for WebGL2",
   "main": "main.js",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node node_modules/jest/bin/jest.js"
   },
   "jest": {
     "moduleFileExtensions": [ "js", "mjs" ],

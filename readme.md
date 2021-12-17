@@ -86,7 +86,7 @@ function components(a:Matrix<Vec4>) {
 
 In cases like this, using objects with a key for each basis vector and component is too clunky. We're almost back where we started getting confused on what values we're pulling from where. The naming of every component and basis' vector can still make things confusing.
 
-The next approach I tried was based on a thought that maybe I didn't need a heavily labelled data structure like a map-of-maps which required me to write/read items via labels, *all* the time. Instead, I needed labels only *some* of the time. Enter vectors and destructuring.
+The next approach I tried was based on a thought that maybe I didn't need a heavily labelled data structure like a map-of-maps which required me to write/read items via labels, *all* the time. Instead, I needed labels only *some* of the time i.e when pulling vertices out. Enter vectors and destructuring.
 
 ```typescript
 type Vec2 = [ number, number ]
@@ -112,7 +112,7 @@ let n:Matrix<Vec3> =
 ]
 ```
 
-
+This enables a compact creation whilst allowing the retrieval of components to be named via destructuring.
 
 
 
@@ -137,6 +137,8 @@ The coordinate space which all other models are placed within and moved relative
 
 
 ##### Camera Space
+
+
 
 ##### NDC Space
 
