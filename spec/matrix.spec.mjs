@@ -1,4 +1,4 @@
-let { add, scale, mult, traverse } = require('../out/Matrix.js')
+let { add, scale, mult, mult2, traverse } = require('../out/Matrix.js')
 
 describe('Vectors', () => {
   it('The sum of two vectors should equal the sum of their components', () => {
@@ -38,9 +38,9 @@ describe('Matrix & Vectors', () => {
 
   it('A 3-component vector multiplied with a 3x3 matrix yields vector of length 3', () => {
     let m = [
-      [ 1,0,0 ],
-      [ 2,1,0 ],
-      [ 0,1,1 ]
+      [ 1, 0, 0 ],
+      [ 2, 1, 0 ],
+      [ 0, 1, 1 ]
     ];
 
     let v = [ 1, 2, 1 ];
@@ -58,6 +58,22 @@ describe('Matrix & Vectors', () => {
     let v = [ 1, 2, 9 ];
 
     expect(mult(m,v)).toEqual([ 7, 19, 14 ])
+  })
+
+  it('Multiplying two matrices yields a new matrix', () => {
+    let m = [
+      [ 1, 0, 0 ],
+      [ 0, 1, 0 ],
+      [ 0, 0, 1 ]
+    ];
+
+    let n = [
+      [ 1, 0, 0 ],
+      [ 0, 1, 0 ],
+      [ 0, 0, 1 ]
+    ];
+
+    expect(mult2(m,n)).toEqual(m);
   })
 
 })
