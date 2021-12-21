@@ -1,6 +1,7 @@
 /**
- * Tatooine
+ * Tatooine – Heavily commented
  */
+
 import * as m from './matrix.js';
 
 const vsSource = `
@@ -20,7 +21,12 @@ const fsSource = `
   }
 `;
 
+//
 let modelViewMatrix = m.identity;
+
+let state = {
+
+}
 
 /**
  * 
@@ -239,18 +245,30 @@ function setup(gl, programInfo, buffers) {
    * @param {*} f - far
    * @returns 
    */
-  let perspective = (l, r, t, b, n, f) => {
-    return new Float32Array([
-      (2 * n) / (r - l),               0.0,                    0.0,  0.0,
-                    0.0, (2 * n) / (t - b),                    0.0,  0.0,
-                    0.0,               0.0,     -(f + n) / (f - n), -1.0,
-      (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
-    ]);
-  }
+  let perspective =
+    (l, r, t, b, n, f) => {
+      return new Float32Array([
+        (2 * n) / (r - l),               0.0,                    0.0,  0.0,
+                      0.0, (2 * n) / (t - b),                    0.0,  0.0,
+                      0.0,               0.0,     -(f + n) / (f - n), -1.0,
+        (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
+      ]);
+    }
 
+  // Setup our persepective projection matrix
   let pMatrix = perspective(left, right, top, bottom, zNear, zFar);
 
-  glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [-0, 0, -155.0]);
+  /**
+   * `modelViewMatrix` is comprised (logically) of a model and view matrix.
+   * The model matrix moves a mesh with respect to it's own local coord system.
+   * The view will be used to position the camera and effectively move everything
+   * within the frame – view matrix is the inverse of a camera matrix. Here they're
+   * collapsed into one becuase we don't have any separate model matrix. The matrix
+   * is positioned at this negative value so that it's not sitting atop (and obscured by)
+   * the near clipping plane.
+   */
+  glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -0, 0, -155.0 ]);
+  // state.position = m.translate( [ 0, 0, -155.0 ], state.position )
 
   // How we setup our attributes and uniforms
   // Tell WebGL how to pull the data from our buffer
@@ -347,7 +365,6 @@ function start(gl, program) {
 
   let rotate = 0;
   window.onmousemove = function({ movementX, screenX, screenY }) {
-    //console.log(screenX)
     rotate = (screenX * ((2 * Math.PI) / 800))
     let rm = m.rotateX(rotate)
     let mm = m.mult4(rm, modelViewMatrix);
@@ -368,9 +385,9 @@ function start(gl, program) {
     }
   }
 
-  // Begin the loop
+  // Begin the render loop
   loop();
 }
 
-// Run main on the 'load' event
+// Run `main()` on the `load` event
 window.onload = main;

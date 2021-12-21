@@ -4,6 +4,7 @@
   "description": "A test space for WebGL2",
   "main": "main.js",
   "scripts": {
+    "scene": "http-server .",
     "test": "node node_modules/jest/bin/jest.js"
   },
   "jest": {

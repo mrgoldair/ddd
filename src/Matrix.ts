@@ -91,9 +91,10 @@ function mult(matrix:any, vec:any):any {
 }
 
 /**
- * 
- * @param m 
- * @param n 
+ * Multiply two matrices
+ * @param m - First matrix to multiply
+ * @param n - Second matrix to multiply
+ * @returns - Matrix
  */
 function mult2(m:Mat<Vec2>, n:Mat<Vec2>):Mat<Vec2>;
 function mult2(m:Mat<Vec3>, n:Mat<Vec3>):Mat<Vec3>;
@@ -101,6 +102,15 @@ function mult2(m:Mat<Vec4>, n:Mat<Vec4>):Mat<Vec4>;
 function mult2(m:any, n:any):any {
   //
   return n.map((b:any) => mult(m,b))
+}
+
+/**
+ * Calculate the inverse of `m`
+ * @param m - Input matrix
+ * @returns - `m` inverted
+ */
+function inverse(m:Mat<Vec2>):Mat<Vec2> {
+  return
 }
 
 export {
