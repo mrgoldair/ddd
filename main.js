@@ -5,7 +5,8 @@
 import * as m from './matrix.js';
 
 const vsSource = `#version 300 es
-  attribute vec4 aVertexPosition;
+
+  in vec4 aVertexPosition;
 
   uniform mat4 uModelViewMatrix;
   uniform mat4 uProjectionMatrix;
@@ -16,8 +17,12 @@ const vsSource = `#version 300 es
 `;
 
 const fsSource = `#version 300 es
+  precision mediump float;
+
+  out vec4 colour;
+
   void main() {
-    gl_FragColor = vec4(0.76, 0.2, 0.33, 1.0);
+    colour = vec4(0.76, 0.2, 0.33, 1.0);
   }
 `;
 
