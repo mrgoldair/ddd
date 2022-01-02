@@ -21,12 +21,7 @@ const fsSource = `
   }
 `;
 
-//
 let modelViewMatrix = m.identity;
-
-let state = {
-
-}
 
 /**
  * 
@@ -50,6 +45,10 @@ function main() {
   // Combined info that will provide locations from our compiled shader
   // We need a compiled shader program in order to look up attribute and uniform positions
   let programInfo = {
+    state: {
+      position: [ 0,0, -155 ],
+      lookat: [ 0,0,-1 ]
+    },
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
@@ -361,16 +360,18 @@ function start(gl, program) {
   // Calculate matrix when a direction key is pressed
   // Being an event handler, this is a sink. We stop processing at the end; we 
   // use the event notification to time side-effects.
-  window.onkeyup = updateModelViewMatrix(gl, program);
+  window.onkeyup = function(){
 
-  let rotate = 0;
-  window.onmousemove = function({ movementX, screenX, screenY }) {
-    rotate = (screenX * ((2 * Math.PI) / 800))
-    let rm = m.rotateX(rotate)
-    let mm = m.mult4(rm, modelViewMatrix);
-
-    gl.uniformMatrix4fv(program.uniformLocations.modelViewMatrix, false, mm);
   }
+
+  // let rotate = 0;
+  // window.onmousemove = function({ movementX, screenX, screenY }) {
+  //   rotate = (screenX * ((2 * Math.PI) / 800))
+  //   let rm = m.rotateX(rotate)
+  //   let mm = m.mult4(rm, modelViewMatrix);
+
+  //   gl.uniformMatrix4fv(program.uniformLocations.modelViewMatrix, false, mm);
+  // }
 
   function loop(){
     let frameId = requestAnimationFrame(loop);

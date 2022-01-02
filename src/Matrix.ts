@@ -110,7 +110,14 @@ function mult2(m:any, n:any):any {
  * @returns - `m` inverted
  */
 function inverse(m:Mat<Vec2>):Mat<Vec2> {
-  return
+  return  [ [ 1,0 ], [ 1,1 ] ];
+}
+
+/**
+ * 
+ */
+function transpose(m:Mat<Vec2>):Mat<Vec2> {
+  return  [ [ 1,0 ], [ 1,1 ] ];
 }
 
 export {
