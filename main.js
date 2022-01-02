@@ -4,7 +4,7 @@
 
 import * as m from './matrix.js';
 
-const vsSource = `
+const vsSource = `#version 300 es
   attribute vec4 aVertexPosition;
 
   uniform mat4 uModelViewMatrix;
@@ -15,7 +15,7 @@ const vsSource = `
   }
 `;
 
-const fsSource = `
+const fsSource = `#version 300 es
   void main() {
     gl_FragColor = vec4(0.76, 0.2, 0.33, 1.0);
   }
@@ -31,7 +31,7 @@ function main() {
 
   let canvas = document.querySelector("#glCanvas");
 
-  let gl = canvas.getContext("webgl");
+  let gl = canvas.getContext("webgl2");
 
   // Only continue if we can get a WebGL2 context
   if (gl === null) {
