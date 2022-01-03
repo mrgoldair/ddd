@@ -7,13 +7,13 @@ import * as m from './matrix.js';
 
 const vsSource = `#version 300 es
 
-  in vec4 aVertexPosition;
+  in vec4 a_position;
 
   uniform mat4 uModelViewMatrix;
   uniform mat4 uProjectionMatrix;
 
   void main() {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    gl_Position = uProjectionMatrix * uModelViewMatrix * a_position;
   }
 `;
 
@@ -46,11 +46,12 @@ function main() {
   }
 
   // Our compiled shader
-  const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
+  const shader = compile(gl, vsSource, fsSource);
 
   // Combined info that will provide locations from our compiled shader
   // We need a compiled shader program in order to look up attribute and uniform positions
-  let programInfo = {
+  let program = {
+    // User space
     state: {
       position: [ 0,0, -155 ],
       matrices: {
@@ -62,22 +63,24 @@ function main() {
       // imported from meshes/cube
       cube
     },
-    program: shaderProgram,
+    // WebGL space
+    shader,
     attribLocations: {
-      vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+      position: 0,
+      normal: 1
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
+      projectionMatrix: gl.getUniformLocation(shader, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shader, 'uModelViewMatrix')
     },
   }
 
   // Setup matrices
   // Initial draw
-  setup(gl, programInfo);
+  setup(gl, program);
 
   // Start app loop
-  start(gl, programInfo);
+  start(gl, program);
 }
 
 /**
@@ -89,7 +92,7 @@ function main() {
  * 
  * Compiles shaders and attaches them to a shader program
  */
-function initShaderProgram(gl, vsSource, fsSource) {
+function compile(gl, vsSource, fsSource) {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -98,7 +101,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
 
-  //gl.bindAttributeLocation(program, 0, 'a_position');
+  gl.bindAttribLocation(program, 0, 'a_position');
 
   gl.linkProgram(program);
 
@@ -178,7 +181,7 @@ function initBuffer(gl, data = null) {
  * @param {*} programInfo 
  * @param {*} buffers - object containing named buffers for a mesh e.g { position: GL.buffer }
  */
-function setup(gl, programInfo) {
+function setup(gl, program) {
 
   // Set the clear color to black, fully opaque
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -237,22 +240,21 @@ function setup(gl, programInfo) {
   // state.position = m.translate( [ 0, 0, -155.0 ], state.position )
 
   // Each key of named meshes e.g. 'cube'
-  for (const mesh in programInfo.meshes) {
+  for (const mesh in program.meshes) {
     // Create the VAO to hold our attributes
     let vao = gl.createVertexArray()
     // Bind before any GL functions
     gl.bindVertexArray(vao)
     // Iterate each attr type within our mesh e.g. position or normal
-    for (const attr in programInfo.meshes[mesh]) {
-
+    for (const attr in program.meshes[mesh]) {
       // Grab our mesh attribute and create a data buffer
-      let buffer = initBuffer(gl,programInfo.meshes[mesh][attr])
+      let buffer = initBuffer(gl,program.meshes[mesh][attr])
       // Bind that buffer for later retrieval
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       // Link the attribute to the previous buffer; the plugs are connected - gl.ARRAY_BUFFER is now free
       gl.vertexAttribPointer(
-        programInfo.attribLocations.vertexPosition,
-        3,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
+        program.attribLocations[attr],
+        3,          // Components per vertex :: Number
         gl.FLOAT,   // Type – The type of values we're expecting - we converted our position values to Float32
         false,      // Normalize :: Boolean - Don't convert to the range 0 -> 1
         0,          // Stride :: Number – 0 = move forward component-per-vert * sizeof(type)
@@ -261,31 +263,29 @@ function setup(gl, programInfo) {
 
       // Enable it so we can pull values
       gl.enableVertexAttribArray(
-        programInfo.attribLocations.vertexPosition
+        program.attribLocations.vertexPosition
       );
       
       // Save this VAO back into our state for later access
-      programInfo.state.vao = vao;
+      program.state.vao = vao;
 
       // Unbind so to prevent bad state
       gl.bindVertexArray(null);
     }
   }
 
-  // How we setup our attributes and uniforms
-  // Tell WebGL how to pull the data from our buffer
-  gl.useProgram(programInfo.program);
+  gl.useProgram(program.shader);
 
   // Using uniform locations from the compiled program, set our matrices
   // These will be combined within the vertex shader
   gl.uniformMatrix4fv(
-    programInfo.uniformLocations.projectionMatrix,
+    program.uniformLocations.projectionMatrix,
     false,
     pMatrix
   );
 
   gl.uniformMatrix4fv(
-    programInfo.uniformLocations.modelViewMatrix,
+    program.uniformLocations.modelViewMatrix,
     false,
     modelViewMatrix
   );
@@ -295,7 +295,7 @@ function setup(gl, programInfo) {
 /**
  * Effecting program through key events
  * @param {*} gl - WebGL context
- * @param {*} programInfo - Compiled shader details
+ * @param {*} program - Compiled shader details
  */
 const updateModelViewMatrix = (gl, programInfo) => e => {
 
