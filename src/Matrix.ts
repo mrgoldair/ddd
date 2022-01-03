@@ -104,22 +104,6 @@ function mult2(m:any, n:any):any {
   return n.map((b:any) => mult(m,b))
 }
 
-/**
- * Calculate the inverse of `m`
- * @param m - Input matrix
- * @returns - `m` inverted
- */
-function inverse(m:Mat<Vec2>):Mat<Vec2> {
-  return  [ [ 1,0 ], [ 1,1 ] ];
-}
-
-/**
- * 
- */
-function transpose(m:Mat<Vec2>):Mat<Vec2> {
-  return  [ [ 1,0 ], [ 1,1 ] ];
-}
-
 export {
   add,
   scale,

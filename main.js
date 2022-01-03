@@ -2,6 +2,7 @@
  * Tatooine – Heavily commented
  */
 
+import cube from './mesh/cube.js';
 import * as m from './matrix.js';
 
 const vsSource = `#version 300 es
@@ -52,7 +53,14 @@ function main() {
   let programInfo = {
     state: {
       position: [ 0,0, -155 ],
-      lookat: [ 0,0,-1 ]
+      matrices: {
+        view: null
+      },
+      vao: null
+    },
+    meshes: {
+      // imported from meshes/cube
+      cube
     },
     program: shaderProgram,
     attribLocations: {
@@ -62,17 +70,11 @@ function main() {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')
     },
-    matrices: {
-      view: null
-    }
   }
-
-  // Create and add vertex data buffer
-  let buffers = initBuffers(gl);
 
   // Setup matrices
   // Initial draw
-  setup(gl, programInfo, buffers);
+  setup(gl, programInfo);
 
   // Start app loop
   start(gl, programInfo);
@@ -91,18 +93,21 @@ function initShaderProgram(gl, vsSource, fsSource) {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-  let shaderProgram = gl.createProgram();
+  let program = gl.createProgram();
 
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
 
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert('Unable to initialize the shader program: ', + gl.getProgramInfoLog(shaderProgram));
+  //gl.bindAttributeLocation(program, 0, 'a_position');
+
+  gl.linkProgram(program);
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    alert('Unable to initialize the shader program: ', + gl.getProgramInfoLog(program));
     return null;
   }
 
-  return shaderProgram;
+  return program;
 }
 
 /**
@@ -128,14 +133,13 @@ function loadShader(gl, type, source) {
 }
 
 /**
- * Hard-coded plane.
  * Loading mesh data should take an array of numbers
  * representing our vertices (x,y,z) and load them
  * into buffers dynamically
  * @param {*} gl - WebGL Context
  * @returns - Object containing buffer objects
  */
-function initBuffers(gl, vertices = null) {
+function initBuffer(gl, data = null) {
 
   /*
   *  bufferData(a,d)    bindBuffer(a,b)
@@ -150,7 +154,7 @@ function initBuffers(gl, vertices = null) {
   */
 
   // Create our gl buffer to fill with model vertices
-  const positionBuffer = gl.createBuffer();
+  const buffer = gl.createBuffer();
 
   /* WebGL lets us manipulate many WebGL resources on global bind points - here gl.ARRAY_BUFFER.
      You can think of bind points as internal global variables inside WebGL.
@@ -159,54 +163,12 @@ function initBuffers(gl, vertices = null) {
 
      Here we bind the `positionBuffer` to ARRAY_BUFFER bind point
   */
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-  // Values we'll use as our attribute values
-  const positions = [
-    //front
-    -50,  50, -50,
-     50,  50, -50,
-    -50, -50, -50,
-    -50, -50, -50,
-     50,  50, -50,
-     50, -50, -50,
-    // left
-    -50, -50, -50,
-    -50,  50, -50,
-    -50,  50,  50,
-    -50,  50,  50,
-    -50, -50,  50,
-    -50, -50, -50,
-    // right
-     50, -50, -50,
-     50,  50, -50,
-     50,  50,  50,
-     50,  50,  50,
-     50, -50,  50,
-     50, -50, -50,
-    // // right
-    //  10.0, -10.0, -10.0,
-    //  10.0,  10.0, -10.0,
-    //  10.0,  10.0,  10.0,
-    //  10.0, -10.0,  10.0,
-    // // top
-    // -10.0,  10.0,  10.0,
-    // -10.0,  10.0, -10.0,
-    //  10.0,  10.0, -10.0,
-    //  10.0,  10.0,  10.0,
-    // // bottom
-    // -10.0, -10.0,  10.0,
-    // -10.0, -10.0, -10.0,
-    //  10.0, -10.0, -10.0,
-    //  10.0, -10.0,  10.0
-  ];
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
   // Notice we buffer data via our bind point (ARRAY_BUFFER) not the `positionBuffer` directly
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
 
-  return {
-    position: positionBuffer
-  };
+  return buffer;
 }
 
 /**
@@ -214,9 +176,9 @@ function initBuffers(gl, vertices = null) {
  * or at the arrival of events
  * @param {*} gl 
  * @param {*} programInfo 
- * @param {*} buffers 
+ * @param {*} buffers - object containing named buffers for a mesh e.g { position: GL.buffer }
  */
-function setup(gl, programInfo, buffers) {
+function setup(gl, programInfo) {
 
   // Set the clear color to black, fully opaque
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -274,34 +236,44 @@ function setup(gl, programInfo, buffers) {
   glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -0, 0, -155.0 ]);
   // state.position = m.translate( [ 0, 0, -155.0 ], state.position )
 
-  // How we setup our attributes and uniforms
-  // Tell WebGL how to pull the data from our buffer
-  {
+  // Each key of named meshes e.g. 'cube'
+  for (const mesh in programInfo.meshes) {
+    // Create the VAO to hold our attributes
+    let vao = gl.createVertexArray()
+    // Bind before any GL functions
+    gl.bindVertexArray(vao)
+    // Iterate each attr type within our mesh e.g. position or normal
+    for (const attr in programInfo.meshes[mesh]) {
 
-    // Like `initBuffer` we're wanting to affect our position buffer so we bind to gl.ARRAY_BUFFER
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+      // Grab our mesh attribute and create a data buffer
+      let buffer = initBuffer(gl,programInfo.meshes[mesh][attr])
+      // Bind that buffer for later retrieval
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      // Link the attribute to the previous buffer; the plugs are connected - gl.ARRAY_BUFFER is now free
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexPosition,
+        3,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
+        gl.FLOAT,   // Type – The type of values we're expecting - we converted our position values to Float32
+        false,      // Normalize :: Boolean - Don't convert to the range 0 -> 1
+        0,          // Stride :: Number – 0 = move forward component-per-vert * sizeof(type)
+        0           // Offset :: Number – Where to start taking values in the buffer - 0 is the start, no offset
+      );
 
-    /**
-     * `vertexAttribPointer` implicitly binds to ARRAY_BUFFER
-     * 
-     * "A hidden part of gl.vertexAttribPointer is that it binds the current ARRAY_BUFFER to the attribute.
-     * In other words now this attribute is bound to positionBuffer. That means we're free to bind something
-     *  else to the ARRAY_BUFFER bind point. The attribute will continue to use positionBuffer."
-     */
-    gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexPosition,
-      3,          // Components per vertex :: Number - here's it's two becase our model data only specified x and y
-      gl.FLOAT,   // Type – The type of values we're expecting - we converted our position values to Float32
-      false,      // Normalize :: Boolean - Don't convert to the range 0 -> 1
-      0,          // Stride :: Number – 0 = move forward component-per-vert * sizeof(type)
-      0           // Offset :: Number – Where to start taking values in the buffer - 0 is the start, no offset
-    );
+      // Enable it so we can pull values
+      gl.enableVertexAttribArray(
+        programInfo.attribLocations.vertexPosition
+      );
+      
+      // Save this VAO back into our state for later access
+      programInfo.state.vao = vao;
 
-    gl.enableVertexAttribArray(
-      programInfo.attribLocations.vertexPosition
-    );
+      // Unbind so to prevent bad state
+      gl.bindVertexArray(null);
+    }
   }
 
+  // How we setup our attributes and uniforms
+  // Tell WebGL how to pull the data from our buffer
   gl.useProgram(programInfo.program);
 
   // Using uniform locations from the compiled program, set our matrices
@@ -318,11 +290,6 @@ function setup(gl, programInfo, buffers) {
     modelViewMatrix
   );
 
-  {
-    const offset = 0;
-    const vertexCount = 18; // 8 pieces of data in our buffer; 2 per vertex, hence 4
-    gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
-  }
 }
 
 /**
@@ -384,6 +351,8 @@ function start(gl, program) {
     {
       // Clear the buffer with the specified colour;
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      
+      gl.bindVertexArray(program.state.vao);
 
       const offset = 0;
       const vertexCount = 18; // 8 pieces of data in our buffer; 2 per vertex, hence 4
