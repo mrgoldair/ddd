@@ -9,11 +9,12 @@ const vsSource = `#version 300 es
 
   in vec4 a_position;
 
-  uniform mat4 uModelViewMatrix;
-  uniform mat4 uProjectionMatrix;
+  uniform mat4 u_model;
+  uniform mat4 u_view;
+  uniform mat4 u_projection;
 
   void main() {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * a_position;
+    gl_Position = u_projection * u_view * u_model * a_position;
   }
 `;
 
@@ -27,16 +28,39 @@ const fsSource = `#version 300 es
   }
 `;
 
-let modelViewMatrix = m.identity;
+// let state = {
+//   // User space
+//   app: {
+//     position: [ 0, 0, -155 ],
+//     matrices: {
+//       view: null
+//     },
+//     vao: null,
+//     mesh: {
+//       // imported from meshes/cube
+//       cube
+//     },
+//   },
+//   // WebGL space
+//   gl: {
+//     shader,
+//     attribLocations: {
+//       position: 0,
+//       normal: 1
+//     },
+//     uniformLocations: {
+//       projectionMatrix: gl.getUniformLocation(shader, 'uProjectionMatrix'),
+//       modelViewMatrix: gl.getUniformLocation(shader, 'uModelViewMatrix')
+//     },
+//   }
+// }
 
 /**
- * 
- * @returns Entry point / composition root
+ * Entry point / composition root
  */
 function main() {
-
+  // Get our WebGL context from the browser or alert
   let canvas = document.querySelector("#glCanvas");
-
   let gl = canvas.getContext("webgl2");
 
   // Only continue if we can get a WebGL2 context
@@ -55,12 +79,11 @@ function main() {
     state: {
       position: [ 0, 0, -155 ],
       matrices: {
-        view: null
+        view: m.identity
       },
       vao: null
     },
     meshes: {
-      // imported from meshes/cube
       cube
     },
     // WebGL space
@@ -70,25 +93,28 @@ function main() {
       normal: 1
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shader, 'uProjectionMatrix'),
-      modelViewMatrix: gl.getUniformLocation(shader, 'uModelViewMatrix')
+      model: gl.getUniformLocation(shader, 'u_model'),
+      view: gl.getUniformLocation(shader, 'u_view'),
+      projection: gl.getUniformLocation(shader, 'u_projection')
     },
   }
 
-  // Setup matrices
+  // Setup matrices, uniforms, mesh vaos
   setup(gl, program);
 
   // Start app loop
-  start(gl, program);
+  run(gl, program);
 }
 
 /**
- * Static setup and initial draw - details that don't change after creation
- * or at the arrival of events
+ * Static setup - details that don't change per render
+ * e.g. uniforms, vao
  * @param {*} gl
  * @param {*} program 
  */
 function setup(gl, program) {
+  
+  let { state: { matrices } } = program
 
   // Set the clear color to black, fully opaque
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -101,7 +127,7 @@ function setup(gl, program) {
   // Clear the buffer with the specified colour;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Because z 
+  // Because z
   const zNear  =   50;
   const zFar   = 1000;
   const left   = -100;
@@ -143,9 +169,10 @@ function setup(gl, program) {
    * is positioned at this negative value so that it's not sitting atop (and obscured by)
    * the near clipping plane.
    */
-  glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -0, 0, -155.0 ]);
-  // state.position = m.translate( [ 0, 0, -155.0 ], state.position )
+  //glMatrix.mat4.translate(matrices.view, matrices.view, [ 0, 0, -155.0 ]);
+  matrices.view = m.translate( [ 0, 0, -155.0, 1 ], matrices.view )
 
+  // Create our mesh vaos - Vertex Array Object
   // Each key of named meshes e.g. 'cube'
   for (const mesh in program.meshes) {
     // Create the VAO to hold our attributes
@@ -186,15 +213,21 @@ function setup(gl, program) {
   // Using uniform locations from the compiled program, set our matrices
   // These will be combined within the vertex shader
   gl.uniformMatrix4fv(
-    program.uniformLocations.projectionMatrix,
+    program.uniformLocations.model,
     false,
-    pMatrix
+    m.identity
   );
 
   gl.uniformMatrix4fv(
-    program.uniformLocations.modelViewMatrix,
+    program.uniformLocations.view,
     false,
-    modelViewMatrix
+    matrices.view
+  );
+
+  gl.uniformMatrix4fv(
+    program.uniformLocations.projection,
+    false,
+    pMatrix
   );
 
 }
@@ -232,7 +265,12 @@ const updateModelViewMatrix = (gl, programInfo) => e => {
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 }
 
-function start(gl, program) {
+/**
+ * Run - update details that may changer per render
+ * @param {*} gl - The WebGL context
+ * @param {*} program - Our program state
+ */
+function run(gl, program) {
 
   // key->vector . (mult m) v . set(program, ["matrices", "viewModel"])
   // compose( key)

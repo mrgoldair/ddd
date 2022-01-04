@@ -58,7 +58,7 @@ export const mult4 = (m,n) => {
  * @param {*} v 
  * @returns 
  */
-export const translate = (matrix, v) => {
+export const translate = (v, matrix) => {
   // Copy
   let m = Array.of(...matrix);
   // Update

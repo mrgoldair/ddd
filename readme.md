@@ -1,24 +1,14 @@
-### Tatooine
+<img src="logo.svg">
 
-A tiny learning project for WebGL
-
-
+<br/>
 
 <img src="screenshot.png">
 
-
-
 ##### Todo
-- Change to WebGL2
 - Create delta from mouse input
-
 - Decide how to handle state updates (calculating and setting matrix values) from browser callbacks e.g. mouse/keyboard
 
-  
-
 ##### Glossary / Ramblings
-
-
 
 ##### Expressing matrices in JS/TS
 
