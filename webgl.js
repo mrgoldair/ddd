@@ -9,8 +9,8 @@
  * Compiles shaders and attaches them to a shader program
  */
  function compile(gl, vsSource, fsSource) {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  const vertexShader = shader(gl, gl.VERTEX_SHADER, vsSource);
+  const fragmentShader = shader(gl, gl.FRAGMENT_SHADER, fsSource);
 
   let program = gl.createProgram();
 
@@ -36,7 +36,7 @@
  * @param {*} source - Textual source of shader
  * @returns - Compiled WebGL shader
  */
-function loadShader(gl, type, source) {
+function shader(gl, type, source) {
   const shader = gl.createShader(type);
 
   gl.shaderSource(shader, source);
@@ -58,7 +58,7 @@ function loadShader(gl, type, source) {
  * @param {*} gl - WebGL Context
  * @returns - Object containing buffer objects
  */
- function initBuffer(gl, data = null) {
+ function buffer(gl, data = null) {
 
   /*
   *  bufferData(a,d)    bindBuffer(a,b)
@@ -92,6 +92,5 @@ function loadShader(gl, type, source) {
 
 export {
   compile,
-  loadShader,
-  initBuffer
+  buffer
 }

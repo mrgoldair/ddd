@@ -1,7 +1,7 @@
 /**
  * Tatooine – Heavily commented
  */
-import { compile, initBuffer } from './webgl.js';
+import { compile, buffer } from './webgl.js';
 import cube from './mesh/cube.js';
 import * as m from './matrix.js';
 
@@ -155,9 +155,9 @@ function setup(gl, program) {
     // Iterate each attr type within our mesh e.g. position or normal
     for (const attr in program.meshes[mesh]) {
       // Grab our mesh attribute and create a data buffer
-      let buffer = initBuffer(gl,program.meshes[mesh][attr])
+      let buff = buffer(gl,program.meshes[mesh][attr])
       // Bind that buffer for later retrieval
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buff);
       // Link the attribute to the previous buffer; the plugs are connected - gl.ARRAY_BUFFER is now free
       gl.vertexAttribPointer(
         program.attribLocations[attr],
