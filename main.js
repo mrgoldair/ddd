@@ -169,7 +169,6 @@ function setup(gl, program) {
    * is positioned at this negative value so that it's not sitting atop (and obscured by)
    * the near clipping plane.
    */
-  //glMatrix.mat4.translate(matrices.view, matrices.view, [ 0, 0, -155.0 ]);
   matrices.view = m.translate( [ 0, 0, -155.0, 1 ], matrices.view )
 
   // Create our mesh vaos - Vertex Array Object
