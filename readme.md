@@ -1,8 +1,9 @@
-<img src="logo.svg">
-
+<p align="center" width="100%">
+	<img src="logo.svg" height="275px"/>
+</p>
 <br/>
 
-<img src="screenshot.png">
+**ddd** is  
 
 ##### Todo
 - Create delta from mouse input

@@ -14,7 +14,7 @@ const vsSource = `#version 300 es
   uniform mat4 u_projection;
 
   void main() {
-    gl_Position = u_projection * u_view * u_model * a_position;
+    gl_Position = u_projection * inverse(u_view) * u_model * a_position;
   }
 `;
 
@@ -28,39 +28,13 @@ const fsSource = `#version 300 es
   }
 `;
 
-// let state = {
-//   // User space
-//   app: {
-//     position: [ 0, 0, -155 ],
-//     matrices: {
-//       view: null
-//     },
-//     vao: null,
-//     mesh: {
-//       // imported from meshes/cube
-//       cube
-//     },
-//   },
-//   // WebGL space
-//   gl: {
-//     shader,
-//     attribLocations: {
-//       position: 0,
-//       normal: 1
-//     },
-//     uniformLocations: {
-//       projectionMatrix: gl.getUniformLocation(shader, 'uProjectionMatrix'),
-//       modelViewMatrix: gl.getUniformLocation(shader, 'uModelViewMatrix')
-//     },
-//   }
-// }
-
 /**
  * Entry point / composition root
  */
 function main() {
   // Get our WebGL context from the browser or alert
   let canvas = document.querySelector("#glCanvas");
+
   let gl = canvas.getContext("webgl2");
 
   // Only continue if we can get a WebGL2 context
@@ -77,14 +51,22 @@ function main() {
   let program = {
     // User space
     state: {
-      position: [ 0, 0, -155 ],
+      // Start looking down z axis
+      heading: [ 0, 0, 1 ],
+      position: [ 0, 0, 5 ],
+      rotateX: 0,
+      rotateY: 0,
       matrices: {
-        view: m.identity
+        camera: m.identity([ 0, 0, 5 ])
       },
       vao: null
     },
     meshes: {
       cube
+    },
+    canvas: {
+      width: canvas.clientWidth,
+      height: canvas.clientHeight
     },
     // WebGL space
     shader,
@@ -127,39 +109,6 @@ function setup(gl, program) {
   // Clear the buffer with the specified colour;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Because z
-  const zNear  =   50;
-  const zFar   = 1000;
-  const left   = -100;
-  const right  =  100;
-  const top    =  100;
-  const bottom = -100;
-
-  /**
-   * Create a perspective frustum from a description of edges
-   * - The resulting matrix is in row-order
-   * - Maybe in a `Matrix` module
-   * @param {*} l - left
-   * @param {*} r - right
-   * @param {*} t - top
-   * @param {*} b - bottom
-   * @param {*} n - near
-   * @param {*} f - far
-   * @returns 
-   */
-  let perspective =
-    (l, r, t, b, n, f) => {
-      return new Float32Array([
-        (2 * n) / (r - l),               0.0,                    0.0,  0.0,
-                      0.0, (2 * n) / (t - b),                    0.0,  0.0,
-                      0.0,               0.0,     -(f + n) / (f - n), -1.0,
-        (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
-      ]);
-    }
-
-  // Setup our persepective projection matrix
-  let pMatrix = perspective(left, right, top, bottom, zNear, zFar);
-
   /**
    * `modelViewMatrix` is comprised (logically) of a model and view matrix.
    * The model matrix moves a mesh with respect to it's own local coord system.
@@ -169,7 +118,6 @@ function setup(gl, program) {
    * is positioned at this negative value so that it's not sitting atop (and obscured by)
    * the near clipping plane.
    */
-  matrices.view = m.translate( [ 0, 0, -155.0, 1 ], matrices.view )
 
   // Create our mesh vaos - Vertex Array Object
   // Each key of named meshes e.g. 'cube'
@@ -209,59 +157,12 @@ function setup(gl, program) {
 
   gl.useProgram(program.shader);
 
-  // Using uniform locations from the compiled program, set our matrices
-  // These will be combined within the vertex shader
-  gl.uniformMatrix4fv(
-    program.uniformLocations.model,
-    false,
-    m.identity
-  );
-
-  gl.uniformMatrix4fv(
-    program.uniformLocations.view,
-    false,
-    matrices.view
-  );
-
   gl.uniformMatrix4fv(
     program.uniformLocations.projection,
     false,
-    pMatrix
+    m.persp(2.09, (program.canvas.width / program.canvas.height), 0.1, 100)
   );
 
-}
-
-/**
- * Effecting program through key events
- * @param {*} gl - WebGL context
- * @param {*} program - Compiled shader details
- */
-const updateModelViewMatrix = (gl, programInfo) => e => {
-
-  // Calculate a new matrix
-  switch (e.keyCode) {
-    case 37:
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ -10, 0, 0 ])
-      console.log(modelViewMatrix);
-      break;
-    case 38:
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0, 0.5, 0 ])
-      console.log(modelViewMatrix);
-      break;
-    case 39:
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 1, 0, 0 ])
-      console.log(modelViewMatrix);
-      break;
-    case 40:
-      glMatrix.mat4.translate(modelViewMatrix, modelViewMatrix, [ 0, -0.5, 0 ])
-      console.log(modelViewMatrix);
-      break;
-    default:
-      console.log("other");
-  }
-
-  // Set our newly calculated matrix
-  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 }
 
 /**
@@ -271,36 +172,73 @@ const updateModelViewMatrix = (gl, programInfo) => e => {
  */
 function run(gl, program) {
 
-  // key->vector . (mult m) v . set(program, ["matrices", "viewModel"])
-  // compose( key)
-  // Calculate matrix when a direction key is pressed
+  let { state:{ matrices:{ rotateY:mRotateY, camera }}, heading } = program;
+  let { canvas: { width, height }} = program;
+  let { state:{ position, translate, rotateY, rotateX }} = program;
+
   // Being an event handler, this is a sink. We stop processing at the end; we 
   // use the event notification to time side-effects.
-  window.onkeyup = function(){
-
+  window.onkeydown = e => {
+    switch (e.keyCode) {
+      // Left
+      case 37: {
+        let heading = [ camera[0], camera[1], camera[2] ];
+        //let p       = [ camera[12], camera[13], camera[14] ];
+        camera = m.translate(m.scale(-0.5, heading), camera)
+        break;
+      }
+      // Forwards
+      case 38: {
+        // camera z-axis
+        let heading = [ camera[8], camera[9], camera[10] ];
+        position = m.add(m.scale(-0.5, m.normalise(heading)), position)
+        break;
+      }
+      // Right  
+      case 39: {
+        let heading = [ camera[0], camera[1], camera[2] ];
+        camera      = m.translate(m.scale(0.5, heading), camera)
+        break;
+      }
+      // Backwards (toward +ve z)
+      case 40: {
+        let heading = [ camera[8], camera[9], camera[10] ];
+        camera      = m.translate(m.scale(0.5, heading), camera);
+        break;
+      }
+      default:
+        break;
+    }
   }
 
-  // let rotate = 0;
-  // window.onmousemove = function({ movementX, screenX, screenY }) {
-  //   rotate = (screenX * ((2 * Math.PI) / 800))
-  //   let rm = m.rotateX(rotate)
-  //   let mm = m.mult4(rm, modelViewMatrix);
+  // state -> e -> state
+  window.onmousemove = function({ movementX, movementY }) {
+    if (movementX != 0)
+      rotateY += (movementX / 500);
 
-  //   gl.uniformMatrix4fv(program.uniformLocations.modelViewMatrix, false, mm);
-  // }
+    if (movementY != 0)
+      rotateX += (movementY / 500);
 
-  function loop(){
+    let rotation = m.mult4(m.rotateX(-rotateX),m.rotateY(-rotateY));
+    camera = m.mult4(rotation,m.identity([ camera[12], camera[13], camera[14] ]));
+  }
+
+  function loop(timestamp){
     // Set aside our frame id in case we need to cancel
     let frameId = requestAnimationFrame(loop);
     // Perform one loop of the render
     {
+      // Camera
+      gl.uniformMatrix4fv(program.uniformLocations.view, false, camera);
+      // Model
+      gl.uniformMatrix4fv(program.uniformLocations.model, false, m.identity());
       // Clear the buffer with the specified colour;
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       // Select the mesh to render
       gl.bindVertexArray(program.state.vao);
       // 
       const offset = 0;
-      const vertexCount = 18; // 8 pieces of data in our buffer; 2 per vertex, hence 4
+      const vertexCount = 6; // 8 pieces of data in our buffer; 2 per vertex, hence 4
       gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
     }
   }

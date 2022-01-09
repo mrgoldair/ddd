@@ -5,19 +5,36 @@
 /**
  * basis vectors in row-major order
  */
-export const identity = [
-  1, 0 ,0 ,0, // x
-  0, 1 ,0 ,0, // y
-  0, 0 ,1 ,0, // z
-  0, 0 ,0 ,1  // w
-];
+export const identity = 
+  ([x,y,z]=[0,0,0]) => [
+    1, 0, 0, 0, // x
+    0, 1, 0, 0, // y
+    0, 0, 1, 0, // z
+    x, y, z, 1  // w
+  ];
+
+export const normalise =
+  ([x, y, z]) => {
+    let magnitude = Math.sqrt(x*x + y*z + z*z)
+    return [ x/magnitude, y/magnitude, z/magnitude ]
+  }
+
+export const add =
+  ([ ax, ay, az], [ bx, by, bz ]) =>
+    [ ax+bx, ay+by, az+bz ]
+
+export const scale =
+  (n, [x,y,z]) =>
+    [ n*x, n*y, n*z, 1 ]
 
 /**
  * Multiply two 4x4 matrices
  * @param {*} m 
  * @param {*} n 
  */
-export const mult4 = (m,n) => {
+export const mult4 = (a,b) => {
+  let m = Array.from(a);
+  let n = Array.from(b);
   // Row-major matrices
   let x = [
     (m[0] * n[0] + m[1] * n[4] + m[2] *  n[8] + m[3] * n[12]),
@@ -65,7 +82,6 @@ export const translate = (v, matrix) => {
   m[12] += v[0];
   m[13] += v[1];
   m[14] += v[2];
-  m[15] += v[3];
 
   return m;
 }
@@ -103,9 +119,42 @@ export const rotateX = (theta) => {
  */
 export const rotateY = (theta) => {
   return [
-     Math.cos(theta), 0, Math.sin(theta), 0,
-                   0, 1,               0, 0,
-    -Math.sin(theta), 0, Math.cos(theta), 0,
-                   0, 0,               0, 1
+    Math.cos(theta), 0, -Math.sin(theta), 0,
+                  0, 1,                0, 0,
+    Math.sin(theta), 0,  Math.cos(theta), 0,
+                  0, 0,                0, 1
   ];
 };
+
+/**
+ * Create a perspective frustum from a description of edges
+ * - The resulting matrix is in row-order
+ * - Maybe in a `Matrix` module
+ * @param {*} l - left
+ * @param {*} r - right
+ * @param {*} t - top
+ * @param {*} b - bottom
+ * @param {*} n - near
+ * @param {*} f - far
+ * @returns 
+ */
+export const perspective =
+  (l, r, t, b, n, f) =>
+    new Float32Array([
+      (2 * n) / (r - l),               0.0,                    0.0,  0.0,
+                    0.0, (2 * n) / (t - b),                    0.0,  0.0,
+                    0.0,               0.0,     -(f + n) / (f - n), -1.0,
+      (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
+    ]);
+
+export function persp(fov, aspect, near, far) {
+  let f = 1.0 / Math.tan(fov * 0.5);
+
+  return new Float32Array([
+  //i         j                              k   w
+    f/aspect, 0,                             0,  0,
+    0       , f,                             0,  0,
+    0       , 0,     (near + far)/(near - far), -1,
+    0       , 0, (2 * far * near)/(near - far),  0
+  ]);
+}
