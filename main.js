@@ -172,9 +172,8 @@ function setup(gl, program) {
  */
 function run(gl, program) {
 
-  let { state:{ matrices:{ rotateY:mRotateY, camera }}, heading } = program;
-  let { canvas: { width, height }} = program;
-  let { state:{ position, translate, rotateY, rotateX }} = program;
+  let { state:{ matrices:{ camera }}} = program;
+  let { state:{ rotateY, rotateX }} = program;
 
   // Being an event handler, this is a sink. We stop processing at the end; we 
   // use the event notification to time side-effects.
@@ -183,8 +182,7 @@ function run(gl, program) {
       // Left
       case 37: {
         let heading = [ camera[0], camera[1], camera[2] ];
-        //let p       = [ camera[12], camera[13], camera[14] ];
-        camera = m.translate(m.scale(-0.5, heading), camera)
+        camera      = m.translate(m.scale(-0.5, heading), camera)
         break;
       }
       // Forwards
@@ -194,7 +192,7 @@ function run(gl, program) {
         camera      = m.translate(m.scale(-0.5, m.normalise(heading)), camera)
         break;
       }
-      // Right  
+      // Right
       case 39: {
         let heading = [ camera[0], camera[1], camera[2] ];
         camera      = m.translate(m.scale(0.5, heading), camera)
@@ -214,10 +212,10 @@ function run(gl, program) {
   // state -> e -> state
   window.onmousemove = function({ movementX, movementY }) {
     if (movementX != 0)
-      rotateY += (movementX / 500);
+      rotateY += (movementX / 200);
 
     if (movementY != 0)
-      rotateX += (movementY / 500);
+      rotateX += (movementY / 200);
 
     let rotation = m.mult4(m.rotateX(-rotateX),m.rotateY(-rotateY));
     camera = m.mult4(rotation,m.identity([ camera[12], camera[13], camera[14] ]));

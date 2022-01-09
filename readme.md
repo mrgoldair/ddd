@@ -3,15 +3,22 @@
 </p>
 <br/>
 
-**ddd** is  
+A tiny 3D viewer project.
 
-##### Todo
-- Create delta from mouse input
+
+
+### Todo
+- ~~Change to WebGL2~~
+
 - Decide how to handle state updates (calculating and setting matrix values) from browser callbacks e.g. mouse/keyboard
 
-##### Glossary / Ramblings
+  
 
-##### Expressing matrices in JS/TS
+### Glossary & Ramblings
+
+
+
+#### Expressing matrices in JS/TS
 
 Is there any point in providing more structure to vectors and matrices given that WebGL only accepts them as an array of floats anyway? 
 
@@ -107,19 +114,19 @@ This enables a compact creation whilst allowing the retrieval of components to b
 
 
 
-##### Model Space
+#### Model Space
 
 The coordinate space in which the centre of the model is always at the origin.
 
 
 
-##### World Space
+#### World Space
 
 The coordinate space which all other models are placed within and moved relative to one another.
 
 
 
-##### Screen Space
+#### Screen Space
 
 > ...perform a perspective divide on the points in camera space to compute their coordinates in screen space
 >
@@ -127,15 +134,11 @@ The coordinate space which all other models are placed within and moved relative
 
 
 
-##### Camera Space
+#### Camera Space
 
+#### NDC Space
 
-
-##### NDC Space
-
-
-
-##### Homogenous Coordinates
+#### Homogenous Coordinates
 
 Are something to help us deal with affine transformations. An affine transformation is one that preserves parallel relationships – think translation.
 
@@ -143,7 +146,7 @@ Are something to help us deal with affine transformations. An affine transformat
 
 
 
-##### Vertex shaders
+#### Vertex shaders
 
 > ...(a vertex shader's) job is to transform vertices making up the 3D objects of your scene from *camera space to clip space*
 >
@@ -163,7 +166,7 @@ What are clip space coordinates?
 
 
 
-##### Fragment shaders
+#### Fragment shaders
 
 > The fragment shader is called once for every pixel on each shape to be drawn.
 
@@ -171,13 +174,11 @@ The fragment shader is to deliver a colour for each pixel of the shape by calcul
 
 
 
-##### Varyings
+#### Varyings
 
-##### Texel
+#### Texel
 
-
-
-##### Attributes
+#### Attributes
 
 Provides values for the vertex shader.
 
@@ -187,15 +188,15 @@ Receive values from buffers.
 
 
 
-##### Uniforms
+#### Uniforms
 
 Stay the same for all iterations of a shader e.g. view model matrix
 
 
 
-##### Buffer
+#### Buffer
 
-##### Creating a program
+#### Creating a program
 
 Using `gl`, create a shader object sending it the source and compile the shader. Do this for each shader.
 
@@ -249,10 +250,14 @@ A big portion of WebGL is about setting state. In order to do that WebGL offers 
 
 
 
-##### Projection Matrices
+#### Camera Matrix
+
+Moving the camera
+
+#### Projection Matrices
 
 Why and how
 
-##### Rotation Matrices
+#### Rotation Matrices
 
 Why and how
