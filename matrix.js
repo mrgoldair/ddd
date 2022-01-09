@@ -126,28 +126,7 @@ export const rotateY = (theta) => {
   ];
 };
 
-/**
- * Create a perspective frustum from a description of edges
- * - The resulting matrix is in row-order
- * - Maybe in a `Matrix` module
- * @param {*} l - left
- * @param {*} r - right
- * @param {*} t - top
- * @param {*} b - bottom
- * @param {*} n - near
- * @param {*} f - far
- * @returns 
- */
-export const perspective =
-  (l, r, t, b, n, f) =>
-    new Float32Array([
-      (2 * n) / (r - l),               0.0,                    0.0,  0.0,
-                    0.0, (2 * n) / (t - b),                    0.0,  0.0,
-                    0.0,               0.0,     -(f + n) / (f - n), -1.0,
-      (r + l) / (r - l), (t + b) / (t - b), -(2 * f * n) / (f - n),  1.0
-    ]);
-
-export function persp(fov, aspect, near, far) {
+export function perspective(fov, aspect, near, far) {
   let f = 1.0 / Math.tan(fov * 0.5);
 
   return new Float32Array([

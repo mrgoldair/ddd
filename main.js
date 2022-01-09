@@ -160,7 +160,7 @@ function setup(gl, program) {
   gl.uniformMatrix4fv(
     program.uniformLocations.projection,
     false,
-    m.persp(2.09, (program.canvas.width / program.canvas.height), 0.1, 100)
+    m.perspective(2.09, (program.canvas.width / program.canvas.height), 0.1, 100)
   );
 
 }
@@ -191,7 +191,7 @@ function run(gl, program) {
       case 38: {
         // camera z-axis
         let heading = [ camera[8], camera[9], camera[10] ];
-        position = m.add(m.scale(-0.5, m.normalise(heading)), position)
+        camera      = m.translate(m.scale(-0.5, m.normalise(heading)), camera)
         break;
       }
       // Right  
@@ -203,7 +203,7 @@ function run(gl, program) {
       // Backwards (toward +ve z)
       case 40: {
         let heading = [ camera[8], camera[9], camera[10] ];
-        camera      = m.translate(m.scale(0.5, heading), camera);
+        camera      = m.translate(m.scale(0.5, m.normalise(heading)), camera)
         break;
       }
       default:
@@ -238,7 +238,7 @@ function run(gl, program) {
       gl.bindVertexArray(program.state.vao);
       // 
       const offset = 0;
-      const vertexCount = 6; // 8 pieces of data in our buffer; 2 per vertex, hence 4
+      const vertexCount = 30; // 8 pieces of data in our buffer; 2 per vertex, hence 4
       gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
     }
   }
