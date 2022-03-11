@@ -8,17 +8,21 @@ A tiny 3D viewer project.
 
 
 ### Todo
+- Isolate matrix creation to the `run` function; remove all matrix manipulation code from event handlers.
+
 - ~~Change to WebGL2~~
 
 - Decide how to handle state updates (calculating and setting matrix values) from browser callbacks e.g. mouse/keyboard
 
+  - Currently matrices are created every event (mouse/keyboard) using tracked values for x/y/z rotate and what not. This is not smooth as we're at the mercy of the interval at which the browser dispatches repeat events (say holding down a key to move forward). Creating a matrix every event is also inefficient. A more efficient way would be to construct each matrix (x/y/z rotate and translate) once within the render loop. Though because the values can compound quickly values need to be adjusted.
+  
   
 
 ### Glossary & Ramblings
 
 
 
-#### Expressing matrices in JS/TS
+##### Expressing matrices in JS/TS
 
 Is there any point in providing more structure to vectors and matrices given that WebGL only accepts them as an array of floats anyway? 
 
@@ -240,7 +244,7 @@ To get data into <u>inputs</u> we use <u>buffers</u>
 
 
 
-###### Buffers 'n' Bind Points
+##### Buffers 'n' Bind Points
 
 A big portion of WebGL is about setting state. In order to do that WebGL offers "bind points" for example `ARRAY_BUFFER`. Implicitly WebGL can only work on one particular bind point at a time – though there are multiple bind points. In the case of `ARRAY_BUFFER` we set that to some particular buffer (that we've created through `createBuffer()`) and subsequent buffer operations affect whatever buffer is bound to `ARRAY_BUFFER`. 
 
@@ -261,3 +265,9 @@ Why and how
 #### Rotation Matrices
 
 Why and how
+
+
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/computing-pixel-coordinates-of-3d-point/mathematics-computing-2d-coordinates-of-3d-points
+
+https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix
